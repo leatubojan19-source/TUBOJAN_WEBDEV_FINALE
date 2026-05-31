@@ -23,6 +23,20 @@ if [ -f bin/console ]; then
     # ONLY RUN MIGRATIONS IF DATABASE_URL EXISTS
     if [ ! -z "$DATABASE_URL" ]; then
         su -s /bin/bash www-data -c "php bin/console doctrine:migrations:migrate --no-interaction --env=prod" || true
+        
+        # ========== ADD THIS BLOCK ==========
+        # Load fixtures only if database is empty
+        echo "Checking if fixtures are needed..."
+        USER_COUNT=$(su -s /bin/bash www-data -c "php bin/console doctrine:query:sql 'SELECT COUNT(*) FROM user' --env=prod --quiet" 2>/dev/null | grep -o '[0-9]*' | head -1)
+        
+        if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+            echo "Database empty, loading fixtures..."
+            su -s /bin/bash www-data -c "php bin/console doctrine:fixtures:load --no-interaction --env=prod" || true
+        else
+            echo "Database already has data, skipping fixtures."
+        fi
+        # ========== END ADDED BLOCK ==========
+        
     else
         echo "DATABASE_URL missing — skipping migrations"
     fi
