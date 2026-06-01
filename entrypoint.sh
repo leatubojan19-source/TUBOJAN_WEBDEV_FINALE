@@ -5,6 +5,16 @@ export PORT=${PORT:-8080}
 
 echo "Starting app on port $PORT"
 
+# Generate JWT keys if they don't exist
+if [ ! -f config/jwt/private.pem ]; then
+    echo "Generating JWT keys..."
+    mkdir -p config/jwt
+    openssl genrsa -out config/jwt/private.pem 4096
+    openssl rsa -in config/jwt/private.pem -pubout -out config/jwt/public.pem
+    chmod 600 config/jwt/private.pem
+    chmod 644 config/jwt/public.pem
+fi
+
 # Fix permissions
 mkdir -p var/cache var/log var/sessions
 chmod -R 777 var || true
@@ -24,7 +34,6 @@ if [ -f bin/console ]; then
     if [ ! -z "$DATABASE_URL" ]; then
         su -s /bin/bash www-data -c "php bin/console doctrine:migrations:migrate --no-interaction --env=prod" || true
         
-        # ========== ADD THIS BLOCK ==========
         # Load fixtures only if database is empty
         echo "Checking if fixtures are needed..."
         USER_COUNT=$(su -s /bin/bash www-data -c "php bin/console doctrine:query:sql 'SELECT COUNT(*) FROM user' --env=prod --quiet" 2>/dev/null | grep -o '[0-9]*' | head -1)
@@ -35,7 +44,6 @@ if [ -f bin/console ]; then
         else
             echo "Database already has data, skipping fixtures."
         fi
-        # ========== END ADDED BLOCK ==========
         
     else
         echo "DATABASE_URL missing — skipping migrations"
