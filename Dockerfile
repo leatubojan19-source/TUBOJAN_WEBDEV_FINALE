@@ -21,12 +21,18 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy project
 COPY . .
 
+# DEBUG: Verify nelmio/cors-bundle is in lock file
+RUN cat composer.lock | grep -A 5 '"name": "nelmio/cors-bundle"' || echo "BUNDLE NOT FOUND IN LOCK"
+
 # Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
     --no-scripts
+
+# DEBUG: Verify bundle was installed
+RUN ls -la vendor/nelmio/ || echo "NELMIO VENDOR DIR NOT FOUND"
 
 # Fix Symfony writable dirs (IMPORTANT)
 RUN mkdir -p var/cache var/log var/sessions \
