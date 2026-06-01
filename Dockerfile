@@ -24,6 +24,10 @@ COPY . .
 # DEBUG: Verify nelmio/cors-bundle is in lock file
 RUN cat composer.lock | grep -A 5 '"name": "nelmio/cors-bundle"' || echo "BUNDLE NOT FOUND IN LOCK"
 
+# DEBUG: Check bundles.php
+RUN cat config/bundles.php | grep -i cors || echo "CORS BUNDLE NOT IN bundles.php"
+RUN ls -la config/bundles.php || echo "bundles.php NOT FOUND"
+
 # Install dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
     --no-dev \
