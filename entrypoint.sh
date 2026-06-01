@@ -11,6 +11,8 @@ if [ ! -f config/jwt/private.pem ]; then
     mkdir -p config/jwt
     openssl genrsa -out config/jwt/private.pem 4096
     openssl rsa -in config/jwt/private.pem -pubout -out config/jwt/public.pem
+    # Fix ownership so www-data can read
+    chown www-data:www-data config/jwt/private.pem config/jwt/public.pem
     chmod 600 config/jwt/private.pem
     chmod 644 config/jwt/public.pem
 fi
